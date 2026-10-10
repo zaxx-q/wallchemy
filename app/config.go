@@ -84,6 +84,7 @@ type Config struct {
 
 	// Action flags
 	Rotate           bool `mapstructure:"rotate"`
+	Next             bool `mapstructure:"next"`
 	Favorite         bool `mapstructure:"favorite"`
 	Favorites        bool `mapstructure:"favorites"`
 	FavoritesGallery bool `mapstructure:"favorites_gallery"`
@@ -148,6 +149,7 @@ func hasExplicitAction(c *Config) bool {
 		c.Blacklist != "" ||
 		c.ListBlacklist ||
 		c.Rotate ||
+		c.Next ||
 		c.Previous ||
 		c.Favorite ||
 		c.Favorites ||
@@ -202,6 +204,7 @@ func setupFlags() {
 	// Rotate & script integration flags
 	pflag.BoolP("silent", "S", false, "Suppress desktop notifications")
 	pflag.BoolP("rotate", "R", false, "Rotate through wallpaper modes (random, top, hot, collection)")
+	pflag.BoolP("next", "N", false, "Next wallpaper in history (or rotate mode if at the end)")
 	pflag.Bool("previous", false, "Restore previous wallpaper from history")
 	pflag.Bool("favorite", false, "Save current wallpaper to favorites")
 	pflag.Bool("favorites", false, "Browse favorite wallpapers")
@@ -317,6 +320,10 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 
+	if config.Next {
+		config.Rotate = true
+	}
+
 	// Apply defaults
 	if config.CacheKeep <= 0 {
 		config.CacheKeep = 150
@@ -365,7 +372,7 @@ USAGE:
   wallchemy [COMMAND] [OPTIONS]
 
 COMMANDS:
-  next, rotate                      Rotate through modes: random, top, hot, collection (default)
+  next, rotate                      Next wallpaper in history (rotates through modes if at end) (default)
   random [term]                     Random search (term optional, uses configured terms if omitted)
   top [range]                       Top wallpapers (default range: 1M)
   hot                               Hot / trending wallpapers
@@ -382,6 +389,7 @@ COMMANDS:
 
 WALLPAPER SELECTION OPTIONS:
   -R, --rotate                      Rotate through wallpaper modes
+  -N, --next                        Next wallpaper in history (rotates if at end)
   -i, --id <wallpaper-id>           Download specific wallpaper by ID (e.g., 'ox1234')
   -r, --random [search-term]        Search for random wallpapers
   -H, --hot                         Get hot/trending wallpapers

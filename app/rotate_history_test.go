@@ -53,6 +53,12 @@ func TestHistoryManager(t *testing.T) {
 		t.Fatalf("failed to record entry 2: %v", err)
 	}
 
+	// At the end, GetNext should fail
+	_, _, err = hm.GetNext()
+	if err == nil {
+		t.Fatalf("expected error getting next when at the edge")
+	}
+
 	prev, prevIdx, err := hm.GetPrevious()
 	if err != nil {
 		t.Fatalf("failed to get previous: %v", err)
@@ -64,6 +70,15 @@ func TestHistoryManager(t *testing.T) {
 	// Set current index back to 0
 	if err := hm.SetCurrentIndex(prevIdx); err != nil {
 		t.Fatalf("failed to set current index: %v", err)
+	}
+
+	// Now that current is 0 and we have 2 entries, GetNext should succeed and return w2 at 1
+	next, nextIdx, err := hm.GetNext()
+	if err != nil {
+		t.Fatalf("failed to get next from index 0: %v", err)
+	}
+	if nextIdx != 1 || next.ID != "w2" {
+		t.Fatalf("expected next to be w2 at 1, got %s at %d", next.ID, nextIdx)
 	}
 
 	// Add entry 3 while at 0 (should truncate forward history)

@@ -128,6 +128,24 @@ func (hm *HistoryManager) GetPrevious() (*HistoryEntry, int, error) {
 	return &entry, prevIdx, nil
 }
 
+func (hm *HistoryManager) GetNext() (*HistoryEntry, int, error) {
+	hm.mu.Lock()
+	defer hm.mu.Unlock()
+
+	data, err := hm.Load()
+	if err != nil {
+		return nil, -1, err
+	}
+
+	if data.Current < 0 || data.Current >= len(data.Entries)-1 {
+		return nil, -1, fmt.Errorf("wallpaper history has no later entry")
+	}
+
+	nextIdx := data.Current + 1
+	entry := data.Entries[nextIdx]
+	return &entry, nextIdx, nil
+}
+
 func (hm *HistoryManager) SetCurrentIndex(idx int) error {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()

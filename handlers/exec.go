@@ -350,7 +350,68 @@ func handleRandomWithLifecycle(appCtx *app.AppContext) (string, error) {
 	})
 }
 
+func restoreHistoryEntry(appCtx *app.AppContext, entry *app.HistoryEntry, targetIdx int, actionName string) (string, error) {
+	if entry.ID == "" {
+		msg := "The history entry is invalid"
+		if appCtx.Notifier != nil {
+			appCtx.Notifier.NotifyError("Could Not Restore Wallpaper", msg)
+		}
+		return "", fmt.Errorf("%s", msg)
+	}
+
+	if appCtx.Notifier != nil {
+		appCtx.Notifier.NotifyStart(fmt.Sprintf("%s Wallpaper...", actionName), fmt.Sprintf("Wallhaven: %s", entry.ID))
+	}
+
+	var filePath string
+	if entry.ImagePath != "" && app.FileExists(entry.ImagePath) {
+		if err := app.ApplyWallpaper(entry.ImagePath, appCtx); err != nil {
+			if appCtx.Notifier != nil {
+				appCtx.Notifier.NotifyError("Could Not Restore Wallpaper", err.Error())
+			}
+			return "", err
+		}
+		appCtx.Current.ID = entry.ID
+		appCtx.Current.Path = entry.ImageURL
+		appCtx.Current.Link = entry.PageURL
+		appCtx.Current.FilePath = entry.ImagePath
+		_ = SaveCurrent(appCtx)
+		filePath = entry.ImagePath
+	} else {
+		appCtx.Config.ID = entry.ID
+		res, err := handleSingle(appCtx)
+		if err != nil {
+			if appCtx.Notifier != nil {
+				appCtx.Notifier.NotifyError("Could Not Restore Wallpaper", err.Error())
+			}
+			return "", err
+		}
+		filePath = res
+	}
+
+	_ = appCtx.HistoryManager.SetCurrentIndex(targetIdx)
+
+	if appCtx.CacheTools != nil {
+		pruneCount, err := app.PruneWallpapersCache(appCtx.CacheTools.GetCacheDirectory(), appCtx.Config.CacheKeep)
+		if err == nil && pruneCount > 0 && appCtx.Notifier != nil {
+			appCtx.Notifier.Log(fmt.Sprintf("Pruned %d cached wallpaper(s); keeping %d newest", pruneCount, appCtx.Config.CacheKeep))
+		}
+	}
+
+	if appCtx.Notifier != nil {
+		appCtx.Notifier.NotifySuccess("Wallpaper Restored", fmt.Sprintf("Wallhaven: %s", entry.ID), "preferences-desktop-wallpaper")
+	}
+	return filePath, nil
+}
+
 func handleRotate(appCtx *app.AppContext) (string, error) {
+	// If history is not at the latest wallpaper (user navigated back), advance forward in history
+	if appCtx.HistoryManager != nil {
+		if nextEntry, nextIdx, err := appCtx.HistoryManager.GetNext(); err == nil && nextEntry.ID != "" {
+			return restoreHistoryEntry(appCtx, nextEntry, nextIdx, "Advancing")
+		}
+	}
+
 	modes := appCtx.Config.RotateModes
 	if len(modes) == 0 {
 		modes = []string{"random", "top", "hot"}
@@ -448,57 +509,8 @@ func handlePrevious(appCtx *app.AppContext) (string, error) {
 		}
 		return "", err
 	}
-	if prevEntry.ID == "" {
-		msg := "The history entry is invalid"
-		if appCtx.Notifier != nil {
-			appCtx.Notifier.NotifyError("Could Not Restore Wallpaper", msg)
-		}
-		return "", fmt.Errorf("%s", msg)
-	}
 
-	if appCtx.Notifier != nil {
-		appCtx.Notifier.NotifyStart("Restoring Wallpaper...", fmt.Sprintf("Wallhaven: %s", prevEntry.ID))
-	}
-
-	var filePath string
-	if prevEntry.ImagePath != "" && app.FileExists(prevEntry.ImagePath) {
-		if err := app.ApplyWallpaper(prevEntry.ImagePath, appCtx); err != nil {
-			if appCtx.Notifier != nil {
-				appCtx.Notifier.NotifyError("Could Not Restore Wallpaper", err.Error())
-			}
-			return "", err
-		}
-		appCtx.Current.ID = prevEntry.ID
-		appCtx.Current.Path = prevEntry.ImageURL
-		appCtx.Current.Link = prevEntry.PageURL
-		appCtx.Current.FilePath = prevEntry.ImagePath
-		_ = SaveCurrent(appCtx)
-		filePath = prevEntry.ImagePath
-	} else {
-		appCtx.Config.ID = prevEntry.ID
-		res, err := handleSingle(appCtx)
-		if err != nil {
-			if appCtx.Notifier != nil {
-				appCtx.Notifier.NotifyError("Could Not Restore Wallpaper", err.Error())
-			}
-			return "", err
-		}
-		filePath = res
-	}
-
-	_ = appCtx.HistoryManager.SetCurrentIndex(prevIdx)
-
-	if appCtx.CacheTools != nil {
-		pruneCount, err := app.PruneWallpapersCache(appCtx.CacheTools.GetCacheDirectory(), appCtx.Config.CacheKeep)
-		if err == nil && pruneCount > 0 && appCtx.Notifier != nil {
-			appCtx.Notifier.Log(fmt.Sprintf("Pruned %d cached wallpaper(s); keeping %d newest", pruneCount, appCtx.Config.CacheKeep))
-		}
-	}
-
-	if appCtx.Notifier != nil {
-		appCtx.Notifier.NotifySuccess("Wallpaper Restored", fmt.Sprintf("Wallhaven: %s", prevEntry.ID), "preferences-desktop-wallpaper")
-	}
-	return filePath, nil
+	return restoreHistoryEntry(appCtx, prevEntry, prevIdx, "Restoring")
 }
 
 func handleFavorite(appCtx *app.AppContext) (string, error) {
