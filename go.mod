@@ -1,4 +1,4 @@
-module github.com/davenicholson-xyz/wallchemy
+module github.com/zaxx-q/wallchemy
 
 go 1.24.4
 

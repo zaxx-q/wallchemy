@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/davenicholson-xyz/wallchemy/app"
+	"github.com/zaxx-q/wallchemy/app"
 )
 
 func handleInfo(appCtx *app.AppContext) (string, error) {

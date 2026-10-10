@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/davenicholson-xyz/wallchemy/app"
+	"github.com/zaxx-q/wallchemy/app"
 )
 
 const (

@@ -2,7 +2,7 @@
 
 set -e
 
-REPO="davenicholson-xyz/wallchemy" 
+REPO="zaxx-q/wallchemy" 
 BINARY_NAME="wallchemy"
 VERSION=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 

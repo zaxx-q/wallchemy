@@ -12,11 +12,15 @@ type CurrentWallpaper struct {
 }
 
 type AppContext struct {
-	Config       *Config
-	CacheTools   *CacheTools
-	WallhavenAPI *wapi.WallhavenAPI
-	Version      string
-	Current      CurrentWallpaper
+	Config           *Config
+	CacheTools       *CacheTools
+	WallhavenAPI     *wapi.WallhavenAPI
+	Version          string
+	Current          CurrentWallpaper
+	Notifier         *Notifier
+	HistoryManager   *HistoryManager
+	RotateManager    *RotateManager
+	FavoritesManager *FavoritesManager
 }
 
 func NewAppContext(version string) *AppContext {
@@ -33,4 +37,20 @@ func (app *AppContext) AddWallhavenAPI(wapi *wapi.WallhavenAPI) {
 
 func (app *AppContext) AddCacheTools(cachetools *CacheTools) {
 	app.CacheTools = cachetools
+}
+
+func (app *AppContext) AddNotifier(notifier *Notifier) {
+	app.Notifier = notifier
+}
+
+func (app *AppContext) AddHistoryManager(historyManager *HistoryManager) {
+	app.HistoryManager = historyManager
+}
+
+func (app *AppContext) AddRotateManager(rotateManager *RotateManager) {
+	app.RotateManager = rotateManager
+}
+
+func (app *AppContext) AddFavoritesManager(favoritesManager *FavoritesManager) {
+	app.FavoritesManager = favoritesManager
 }

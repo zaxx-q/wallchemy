@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/davenicholson-xyz/wallchemy/app"
+	"github.com/zaxx-q/wallchemy/app"
 	"github.com/sirupsen/logrus"
 )
 
@@ -43,6 +43,14 @@ func handleCollections(appCtx *app.AppContext) (string, error) {
 
 func handleCollection(appCtx *app.AppContext) (string, error) {
 	var selectedWallpaper string
+
+	if appCtx.Config.Collection == app.RandomCollectionMarker || appCtx.Config.Collection == "" {
+		coll, err := appCtx.Config.GetRandomCollection()
+		if err != nil {
+			return "", err
+		}
+		appCtx.Config.Collection = coll
+	}
 
 	if err := globalFilters(appCtx); err != nil {
 		return "", err

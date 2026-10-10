@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/davenicholson-xyz/wallchemy/app"
+	"github.com/zaxx-q/wallchemy/app"
 	"github.com/sirupsen/logrus"
 )
 

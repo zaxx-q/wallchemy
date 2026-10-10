@@ -3,7 +3,8 @@ package handlers
 import (
 	"fmt"
 
-	"github.com/davenicholson-xyz/wallchemy/app"
+	wapi "github.com/davenicholson-xyz/go-wallhaven/wallhavenapi"
+	"github.com/zaxx-q/wallchemy/app"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,6 +17,12 @@ func handleRandom(appCtx *app.AppContext) (string, error) {
 	}
 
 	sortType := app.SortMethod(appCtx)
+	if sortType == wapi.Random {
+		if appCtx.Config.Random == app.RandomSearchMarker || appCtx.Config.Random == "" {
+			appCtx.Config.Random = appCtx.Config.GetRandomSearchTerm()
+		}
+	}
+
 	fileName := string(sortType)
 
 	cachedWallpaper, err := app.CheckCacheByName(fileName, appCtx)
